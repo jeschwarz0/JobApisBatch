@@ -60,31 +60,9 @@ $multi_client = new \JobApis\Jobs\Client\JobsMulti($providers);
 foreach ($location_list as $cur_location) {
     echo "<h2>$cur_location</h2>" . PHP_EOL;
     foreach ($keyword_list as $cur_keyword) {
+        echo "<h3>$cur_keyword</h3>" . PHP_EOL;
         $list = loadFromProvider($multi_client, $cur_keyword, $cur_location);
-        if (count($list) > 0) {
-            // Output a summary of jobs as arrays
-            # echo $keyword . " in " . $location . count($jobs)." Jobs Found".PHP_EOL;
-            echo "<h3>$cur_keyword</h3>" . PHP_EOL;
-            echo "<table class=\"listing\">" . PHP_EOL;
-            echo "\t<thead>" . PHP_EOL;
-            echo "\t\t<tr>" . PHP_EOL;
-            echo "\t\t\t<th>Name</th><th>Location</th><th>company</th><th>Salary</th><th>Posted</th><th>Deadline</th><th>Source</th>" . PHP_EOL;
-            echo "\t\t</tr>" . PHP_EOL;
-            echo "\t</thead>" . PHP_EOL;
-            echo "\t<tbody>" . PHP_EOL;
-            foreach ($list->all() as $job) {
-                echo "\t\t<tr>" . PHP_EOL;
-                echo "\t\t\t<td><a href=\"$job->url\" target=\"_blank\">$job->name</a></td>" . PHP_EOL;
-                echo "\t\t\t<td>$job->location</td>" . PHP_EOL;
-                echo "\t\t\t<td>" . htmlspecialchars($job->company) . "</td>" . PHP_EOL;
-                echo "\t\t\t<td>$job->baseSalary</td>" . PHP_EOL;
-                echo "\t\t\t<td>" . formatDate($job->datePosted) . "</td>" . PHP_EOL;
-                echo "\t\t\t<td>" . formatDate($job->endDate) . "</td>" . PHP_EOL;
-                echo "\t\t\t<td>$job->source</td>" . PHP_EOL;
-                echo "\t\t</tr>" . PHP_EOL;
-            }
-            echo "\t</tbody>" . PHP_EOL . "</table>" . PHP_EOL;
-        }
+        printToTable($list);
     }
 }
 
@@ -107,6 +85,31 @@ function loadFromProvider($client, $keyword, $location)
     // Get all the jobs
     return $client->getAllJobs($options);
 }
+// Prints a collection of jobs to a table
+function printToTable($collection){
+    if ($collection !== null && count($collection) > 0) {
+        echo "<table class=\"listing\">" . PHP_EOL;
+        echo "\t<thead>" . PHP_EOL;
+        echo "\t\t<tr>" . PHP_EOL;
+        echo "\t\t\t<th>Name</th><th>Location</th><th>company</th><th>Salary</th><th>Posted</th><th>Deadline</th><th>Source</th>" . PHP_EOL;
+        echo "\t\t</tr>" . PHP_EOL;
+        echo "\t</thead>" . PHP_EOL;
+        echo "\t<tbody>" . PHP_EOL;
+        foreach ($collection->all() as $job) {
+            echo "\t\t<tr>" . PHP_EOL;
+            echo "\t\t\t<td><a href=\"$job->url\" target=\"_blank\">$job->name</a></td>" . PHP_EOL;
+            echo "\t\t\t<td>$job->location</td>" . PHP_EOL;
+            echo "\t\t\t<td>" . htmlspecialchars($job->company) . "</td>" . PHP_EOL;
+            echo "\t\t\t<td>$job->baseSalary</td>" . PHP_EOL;
+            echo "\t\t\t<td>" . formatDate($job->datePosted) . "</td>" . PHP_EOL;
+            echo "\t\t\t<td>" . formatDate($job->endDate) . "</td>" . PHP_EOL;
+            echo "\t\t\t<td>$job->source</td>" . PHP_EOL;
+            echo "\t\t</tr>" . PHP_EOL;
+        }
+        echo "\t</tbody>" . PHP_EOL . "</table>" . PHP_EOL;
+    }
+}
+
 // Formats a date or empty if null
 function formatDate($date)
 {
