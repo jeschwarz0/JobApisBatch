@@ -41,9 +41,43 @@ $location_list = explode(':', getenv("JAB_LOCATIONS"));
 $keyword_list = explode(':', getenv("JAB_KEYWORDS"));
 $max_age = intval(getenv("JAB_MAX_AGE"));
 #endregion
-
+// Process the records to desired format
 process(true);
 
+#region Providers
+
+function fetchJobsMulti($keyword, $location)
+{
+    global $max_age;
+
+    $providers = [
+        'Careercast' => [],
+        'Github' => [],
+        'Govt' => [],
+        'Ieee' => [],
+        'Jobinventory' => [],
+        'Monster' => [],
+        'Stackoverflow' => [],
+    ];
+
+    $multi_client = new \JobApis\Jobs\Client\JobsMulti($providers);
+
+    $multi_client
+        ->setKeyword($keyword)
+        ->setLocation($location);
+
+    $options = [
+        'maxAge' => $max_age,
+        'maxResults' => 0,
+        'orderBy' => 'datePosted',
+        'order' => 'desc',
+    ];
+
+    // Get all the jobs
+    return $multi_client->getAllJobs($options);
+}
+
+#endregion
 #region Helper Functions
 function process($to_html = true)
 {
@@ -78,37 +112,6 @@ function process($to_html = true)
 
         }
     }
-}
-
-function fetchJobsMulti($keyword, $location)
-{
-    global $max_age;
-
-    $providers = [
-        'Careercast' => [],
-        'Github' => [],
-        'Govt' => [],
-        'Ieee' => [],
-        'Jobinventory' => [],
-        'Monster' => [],
-        'Stackoverflow' => [],
-    ];
-
-    $multi_client = new \JobApis\Jobs\Client\JobsMulti($providers);
-
-    $multi_client
-        ->setKeyword($keyword)
-        ->setLocation($location);
-
-    $options = [
-        'maxAge' => $max_age,
-        'maxResults' => 0,
-        'orderBy' => 'datePosted',
-        'order' => 'desc',
-    ];
-
-    // Get all the jobs
-    return $multi_client->getAllJobs($options);
 }
 
 // Prints a collection of jobs to a table
