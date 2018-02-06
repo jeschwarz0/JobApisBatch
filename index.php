@@ -30,7 +30,7 @@ table.listing th {
 </head>
 <body>
 
-<h1>Job Apis Batch - <?php echo date("m/d/y");?></h1>
+<h1>Job Apis Batch - <?php echo date("m/d/y"); ?></h1>
 
 <?php
 require __DIR__ . '/vendor/autoload.php';
@@ -45,25 +45,37 @@ $max_age = intval(getenv("JAB_MAX_AGE"));
 process(true);
 
 #region Helper Functions
-function process($to_html = true){
+function process($to_html = true)
+{
     global $location_list, $keyword_list;
     // Loop every location then keyword and create a table for each
     foreach ($location_list as $cur_location) {
-        if ($to_html) echo "<h2>$cur_location</h2>" . PHP_EOL;
+        if ($to_html) {
+            echo "<h2>$cur_location</h2>" . PHP_EOL;
+        }
+
         foreach ($keyword_list as $cur_keyword) {
-            if ($to_html) echo "<h3>$cur_keyword</h3>" . PHP_EOL;
+            if ($to_html) {
+                echo "<h3>$cur_keyword</h3>" . PHP_EOL;
+            }
+
             $list = new \JobApis\Jobs\Client\Collection();
-            foreach (array("fetchJobsMulti") as $client){
-                if (is_callable($client)){
+            foreach (array("fetchJobsMulti") as $client) {
+                if (is_callable($client)) {
                     $next = call_user_func($client, $cur_keyword, $cur_location);
-                    if (get_class($next) === 'JobApis\Jobs\Client\Collection')
+                    if (get_class($next) === 'JobApis\Jobs\Client\Collection') {
                         $list->addCollection($next);
+                    }
+
                 }
-            }// Print the resulting list
-            if ($to_html)
+            } // Print the resulting list
+            if ($to_html) {
                 printToTable($list);
-            else // Assume JSON
+            } else // Assume JSON
+            {
                 echo json_encode($list->all());
+            }
+
         }
     }
 }
@@ -81,7 +93,7 @@ function fetchJobsMulti($keyword, $location)
         'Monster' => [],
         'Stackoverflow' => [],
     ];
-    
+
     $multi_client = new \JobApis\Jobs\Client\JobsMulti($providers);
 
     $multi_client
@@ -100,7 +112,8 @@ function fetchJobsMulti($keyword, $location)
 }
 
 // Prints a collection of jobs to a table
-function printToTable($collection){
+function printToTable($collection)
+{
     if ($collection !== null && count($collection) > 0) {
         echo "<table class=\"listing\">" . PHP_EOL;
         echo "\t<thead>" . PHP_EOL;
