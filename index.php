@@ -40,38 +40,51 @@ require __DIR__ . '/vendor/autoload.php';
 $location_list = explode(':', getenv("JAB_LOCATIONS"));
 $keyword_list = explode(':', getenv("JAB_KEYWORDS"));
 $max_age = intval(getenv("JAB_MAX_AGE"));
-// Load Providers
-
-$providers = [
-    'Careercast' => [],
-    'Dice' => [],
-    'Github' => [],
-    'Govt' => [],
-    'Ieee' => [],
-    'Jobinventory' => [],
-    'Monster' => [],
-    'Stackoverflow' => [],
-];
-
-$multi_client = new \JobApis\Jobs\Client\JobsMulti($providers);
 #endregion
-#region Main
-// Loop every location then keyword and create a table for each
-foreach ($location_list as $cur_location) {
-    echo "<h2>$cur_location</h2>" . PHP_EOL;
-    foreach ($keyword_list as $cur_keyword) {
-        echo "<h3>$cur_keyword</h3>" . PHP_EOL;
-        $list = loadFromProvider($multi_client, $cur_keyword, $cur_location);
-        printToTable($list);
+
+process(true);
+
+#region Helper Functions
+function process($to_html = true){
+    global $location_list, $keyword_list;
+    // Loop every location then keyword and create a table for each
+    foreach ($location_list as $cur_location) {
+        if ($to_html) echo "<h2>$cur_location</h2>" . PHP_EOL;
+        foreach ($keyword_list as $cur_keyword) {
+            if ($to_html) echo "<h3>$cur_keyword</h3>" . PHP_EOL;
+            $list = new \JobApis\Jobs\Client\Collection();
+            foreach (array("fetchJobsMulti") as $client){
+                if (is_callable($client)){
+                    $next = call_user_func($client, $cur_keyword, $cur_location);
+                    if (get_class($next) === 'JobApis\Jobs\Client\Collection')
+                        $list->addCollection($next);
+                }
+            }// Print the resulting list
+            if ($to_html)
+                printToTable($list);
+            else // Assume JSON
+                echo json_encode($list->all());
+        }
     }
 }
 
-#endregion
-#region Helper Functions
-function loadFromProvider($client, $keyword, $location)
+function fetchJobsMulti($keyword, $location)
 {
     global $max_age;
-    $client
+
+    $providers = [
+        'Careercast' => [],
+        'Github' => [],
+        'Govt' => [],
+        'Ieee' => [],
+        'Jobinventory' => [],
+        'Monster' => [],
+        'Stackoverflow' => [],
+    ];
+    
+    $multi_client = new \JobApis\Jobs\Client\JobsMulti($providers);
+
+    $multi_client
         ->setKeyword($keyword)
         ->setLocation($location);
 
@@ -83,8 +96,9 @@ function loadFromProvider($client, $keyword, $location)
     ];
 
     // Get all the jobs
-    return $client->getAllJobs($options);
+    return $multi_client->getAllJobs($options);
 }
+
 // Prints a collection of jobs to a table
 function printToTable($collection){
     if ($collection !== null && count($collection) > 0) {
