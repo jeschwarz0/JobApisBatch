@@ -1,5 +1,6 @@
 {
     "require": {
-        "jobapis/jobs-multi": "^1.1"
+        "jobapis/jobs-multi": "^1.1",
+        "jobapis/jobs-craigslist": "^0.1.0"
     }
 }

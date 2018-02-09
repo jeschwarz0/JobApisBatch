@@ -77,10 +77,30 @@ function fetchJobsMulti($keyword, $location)
     return $multi_client->getAllJobs($options);
 }
 
+function fetchCraigslist($keyword, $location)
+{
+    $query = new JobApis\Jobs\Client\Queries\CraigslistQuery();
+    $query 
+        ->set('query', strtolower($keyword))
+        ->set('location', strtolower(explode(",", $location)[0]))
+        ->set('searchNearby', '1');
+
+    $client = new JobApis\Jobs\Client\Providers\CraigslistProvider($query);
+    try { 
+        $jobs = $client->getJobs();
+    }
+    catch (Exception $ex){
+        $jobs = new \JobApis\Jobs\Client\Collection();
+    }
+    return $jobs;
+   
+}
+
 #endregion
 #region Helper Functions
 function process($to_html = true)
 {
+    $PROVIDERS = array("fetchJobsMulti", "fetchCraigslist");
     global $location_list, $keyword_list;
     // Loop every location then keyword and create a table for each
     foreach ($location_list as $cur_location) {
@@ -94,7 +114,7 @@ function process($to_html = true)
             }
 
             $list = new \JobApis\Jobs\Client\Collection();
-            foreach (array("fetchJobsMulti") as $client) {
+            foreach ($PROVIDERS as $client) {
                 if (is_callable($client)) {
                     $next = call_user_func($client, $cur_keyword, $cur_location);
                     if (get_class($next) === 'JobApis\Jobs\Client\Collection') {
