@@ -40,6 +40,7 @@ require __DIR__ . '/vendor/autoload.php';
 $location_list = explode(':', getenv("JAB_LOCATIONS"));
 $keyword_list = explode(':', getenv("JAB_KEYWORDS"));
 $max_age = intval(getenv("JAB_MAX_AGE"));
+$disable_analysis = strlen(getenv("JAB_DISABLE_ANALYZER")) > 0;
 #endregion
 // Process the records to desired format
 process(true);
@@ -137,11 +138,14 @@ function process($to_html = true)
 // Prints a collection of jobs to a table
 function printToTable($collection)
 {
+    global $disable_analysis;
     if ($collection !== null && count($collection) > 0) {
+        if (!$disable_analysis) $analyzer = mkAnalyzer();
         echo "<table class=\"listing\">" . PHP_EOL;
         echo "\t<thead>" . PHP_EOL;
         echo "\t\t<tr>" . PHP_EOL;
         echo "\t\t\t<th>Name</th><th>Location</th><th>company</th><th>Salary</th><th>Posted</th><th>Deadline</th><th>Source</th>" . PHP_EOL;
+        if (!$disable_analysis) echo "\t\t\t<th>Score</th>" . PHP_EOL;
         echo "\t\t</tr>" . PHP_EOL;
         echo "\t</thead>" . PHP_EOL;
         echo "\t<tbody>" . PHP_EOL;
@@ -154,6 +158,10 @@ function printToTable($collection)
             echo "\t\t\t<td>" . formatDate($job->datePosted) . "</td>" . PHP_EOL;
             echo "\t\t\t<td>" . formatDate($job->endDate) . "</td>" . PHP_EOL;
             echo "\t\t\t<td>$job->source</td>" . PHP_EOL;
+            if (!$disable_analysis){
+                $scores = analyzePositionToArray($job, $analyzer);
+                echo "\t\t\t<td>" . PHP_EOL . writeAnalysisSummary($scores) . "\t\t\t</td>" . PHP_EOL;
+            }
             echo "\t\t</tr>" . PHP_EOL;
         }
         echo "\t</tbody>" . PHP_EOL . "</table>" . PHP_EOL;
@@ -169,6 +177,63 @@ function formatDate($date)
     }
     return $returnval;
 }
+#endregion
+#region Analyzer
+
+/** Analyzes position description and applies scores based on keywords. */
+function analyzePositionToArray(&$position,&$analyzer)
+{
+    if (intval($analyzer->ConfigVersion) !== 1) return FALSE;
+    $result = array();
+    foreach($analyzer->SearchCategory as $categoryArr){
+        $result[(string)$categoryArr->Name] = array();
+        foreach($categoryArr->CategoryValue as $categoryVal){
+            $matchIdx = -1;
+            for ($entryIdx = 0; $matchIdx === -1 && $entryIdx < $analyzer->SearchEntry->count(); $entryIdx++){
+                if (strcmp($analyzer->SearchEntry[$entryIdx]->Name, $categoryVal->EntryName) === 0){
+                    $matchIdx = $entryIdx;
+                }
+            }
+            if ($matchIdx !== -1){
+                $found = false;
+                for ($tidx = 0; !$found && $tidx < $analyzer->SearchEntry[$matchIdx]->SearchTerms->Term->count(); $tidx++){
+                    if (stripos($position->description, (string)$analyzer->SearchEntry[$matchIdx]->SearchTerms->Term[$tidx][0]) !== FALSE)
+                        $found = true;
+                }
+                $mod = intval($found ? $categoryVal->MatchValue : $categoryVal->NonMatchValue);
+                $result[(string)$categoryArr->Name][(string)$categoryVal->EntryName] = $mod;
+            }
+        }
+    }
+    return $result;
+}
+
+function writeAnalysisSummary(&$data)
+{ 
+    $html = '';
+    if (is_array($data)){
+        $html .= "\t\t\t<ul>" . PHP_EOL;
+        foreach ($data as $categoryKey => $categoryValue){
+            $verbose_summary = 'title="';
+            foreach($categoryValue as $entryKey => $entryValue){
+                $verbose_summary .= htmlspecialchars($entryKey) . "($entryValue) ";
+            }
+            $verbose_summary .= '"';
+            $html.= "\t\t\t\t<li $verbose_summary>" . htmlspecialchars($categoryKey) . " : " . array_sum($categoryValue) . "</li>" . PHP_EOL;
+
+        }
+        $html .= "\t\t\t</ul>" . PHP_EOL;
+    }
+    return $html;
+}
+
+function mkAnalyzer()
+{
+    $fil = file_get_contents("preferences.xml") or die("Failed to load preferences.xml");
+    $parse = simplexml_load_string($fil) or die("Failed to parse preferences.xml");
+    return $parse;
+}
+
 #endregion
 ?>
 </body>
