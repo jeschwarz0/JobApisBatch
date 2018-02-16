@@ -216,7 +216,8 @@ function writeAnalysisSummary(&$data)
         foreach ($data as $categoryKey => $categoryValue){
             $verbose_summary = 'title="';
             foreach($categoryValue as $entryKey => $entryValue){
-                $verbose_summary .= htmlspecialchars($entryKey) . "($entryValue) ";
+                if ($entryValue !== 0)
+                    $verbose_summary .= htmlspecialchars($entryKey) . "($entryValue) ";
             }
             $verbose_summary .= '"';
             $html.= "\t\t\t\t<li $verbose_summary>" . htmlspecialchars($categoryKey) . " : " . array_sum($categoryValue) . "</li>" . PHP_EOL;
@@ -229,7 +230,8 @@ function writeAnalysisSummary(&$data)
 
 function mkAnalyzer()
 {
-    $fil = file_get_contents("preferences.xml") or die("Failed to load preferences.xml");
+    $FN = PHP_OS === 'Linux' ? getenv("HOME") . "/.config/JobApisBatch/preferences.xml" : getenv("CSIDL_LOCAL_APPDATA") . "/JobApisBatch/preferences.xml";
+    $fil = file_get_contents($FN) or die("Failed to load preferences.xml");
     $parse = simplexml_load_string($fil) or die("Failed to parse preferences.xml");
     return $parse;
 }
