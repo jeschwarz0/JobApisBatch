@@ -230,7 +230,7 @@ function writeAnalysisSummary(&$data)
 
 function mkAnalyzer()
 {
-    $FN = PHP_OS === 'Linux' ? getenv("HOME") . "/.config/JobApisBatch/preferences.xml" : getenv("CSIDL_LOCAL_APPDATA") . "/JobApisBatch/preferences.xml";
+    $FN = PHP_OS === 'Linux' ? getenv("HOME") . "/.config/JobApisBatch/preferences.xml" : getenv("APPDATA") . "/JobApisBatch/preferences.xml";
     $fil = file_get_contents($FN) or die("Failed to load preferences.xml");
     $parse = simplexml_load_string($fil) or die("Failed to parse preferences.xml");
     return $parse;
