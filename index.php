@@ -102,8 +102,8 @@ function fetchCraigslist($keyword, $location)
 #endregion
 #region Helper Functions
 function process($to_html = true)
-{
-    $PROVIDERS = array("fetchJobsMulti", "fetchCraigslist");
+{  
+    $PROVIDERS = explode(":", getenv("JAB_PROVIDERS"));
     global $location_list, $keyword_list;
     // Loop every location then keyword and create a table for each
     foreach ($location_list as $cur_location) {
@@ -118,8 +118,8 @@ function process($to_html = true)
 
             $list = new \JobApis\Jobs\Client\Collection();
             foreach ($PROVIDERS as $client) {
-                if (is_callable($client)) {
-                    $next = call_user_func($client, $cur_keyword, $cur_location);
+                if (is_callable("fetch" . $client)) {
+                    $next = call_user_func("fetch" . $client, $cur_keyword, $cur_location);
                     if (get_class($next) === 'JobApis\Jobs\Client\Collection') {
                         $list->addCollection($next);
                     }
