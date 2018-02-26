@@ -99,6 +99,19 @@ function fetchCraigslist($keyword, $location)
    
 }
 
+function fetchGoRemote($keyword, $location)
+{
+    $query = new JobApis\Jobs\Client\Queries\GoRemoteQuery();
+    $client = new JobApis\Jobs\Client\Providers\GoRemoteProvider($query);
+    try {
+        $jobs = $client->getJobs();
+    }
+    catch (Exception $ex){
+        $jobs = new \JobApis\Jobs\Client\Collection();
+    }
+    return $jobs;
+}
+
 #endregion
 #region Helper Functions
 function process($to_html = true)
