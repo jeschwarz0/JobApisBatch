@@ -207,6 +207,46 @@ function formatDate($date)
     }
     return $returnval;
 }
+
+function appendRestrictedProviders(&$providers)
+{
+    $keys_path = 'keys.json';
+    if (file_exists($keys_path)) {
+        $keys_json = file_get_contents($keys_path);
+        unset($keys_path);
+        if ($keys_json !== false) {
+            $keys = json_decode($keys_json, true);
+            unset($keys_json);
+            // Build the array
+            $nprov = [
+                'Careerbuilder' => [
+                    'DeveloperKey' => $keys['Careerbuilder.DeveloperKey'],
+                ],
+                'Careerjet' => [
+                    'affid' => $keys['Careerjet.affid'],
+                ],
+                'Indeed' => [
+                    'publisher' => $keys['Indeed.publisher'],
+                ],
+                'J2c' => [
+                    'id' => $keys['J2c.id'],
+                    'pass' => $keys['J2c.pass'],
+                ],
+                'Juju' => [
+                    'partnerid' => $keys['Juju.partnerid'],
+                ],
+                'Usajobs' => [
+                    'AuthorizationKey' => $keys['Usajobs.AuthorizationKey'],
+                ],
+                'Ziprecruiter' => [
+                    'api_key' => $keys['Ziprecruiter.api_key'],
+                ],
+            ]; // Merge the array
+            $providers = array_merge($providers, $nprov);
+        }
+    }
+}
+
 #endregion
 #region Analyzer
 
@@ -264,45 +304,6 @@ function mkAnalyzer()
     $fil = file_get_contents($FN) or die("Failed to load preferences.xml");
     $parse = simplexml_load_string($fil) or die("Failed to parse preferences.xml");
     return $parse;
-}
-
-function appendRestrictedProviders(&$providers)
-{
-    $keys_path = 'keys.json';
-    if (file_exists($keys_path)) {
-        $keys_json = file_get_contents($keys_path);
-        unset($keys_path);
-        if ($keys_json !== false) {
-            $keys = json_decode($keys_json, true);
-            unset($keys_json);
-            // Build the array
-            $nprov = [
-                'Careerbuilder' => [
-                    'DeveloperKey' => $keys['Careerbuilder.DeveloperKey'],
-                ],
-                'Careerjet' => [
-                    'affid' => $keys['Careerjet.affid'],
-                ],
-                'Indeed' => [
-                    'publisher' => $keys['Indeed.publisher'],
-                ],
-                'J2c' => [
-                    'id' => $keys['J2c.id'],
-                    'pass' => $keys['J2c.pass'],
-                ],
-                'Juju' => [
-                    'partnerid' => $keys['Juju.partnerid'],
-                ],
-                'Usajobs' => [
-                    'AuthorizationKey' => $keys['Usajobs.AuthorizationKey'],
-                ],
-                'Ziprecruiter' => [
-                    'api_key' => $keys['Ziprecruiter.api_key'],
-                ],
-            ]; // Merge the array
-            $providers = array_merge($providers, $nprov);
-        }
-    }
 }
 
 #endregion
