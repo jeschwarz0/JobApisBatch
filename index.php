@@ -112,6 +112,21 @@ function fetchGoRemote($keyword, $location)
     return $jobs;
 }
 
+function fetchPHPJobs($keyword, $location)
+{
+    $query = new JobApis\Jobs\Client\Queries\PhpjobsQuery();
+    $query  -> set('country_code', 'us')
+            -> set('search_string', $keyword);
+    $client = new JobApis\Jobs\Client\Providers\PhpjobsProvider($query);
+    try {
+        $jobs = $client->getJobs();
+    }
+    catch (Exception $ex){
+        $jobs = new \JobApis\Jobs\Client\Collection();
+    }
+    return $jobs;
+}
+
 #endregion
 #region Helper Functions
 function process($to_html = true)
