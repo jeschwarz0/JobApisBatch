@@ -26,6 +26,14 @@ table.listing th {
     background-color: #4CAF50;
     color: white;
 }
+
+table.listing .catmatch{
+    color: green;
+}
+
+table.listing .catmismatch{
+    color: red;
+}
 </style>
 </head>
 <body>
@@ -317,13 +325,15 @@ function writeAnalysisSummary(&$data)
     if (is_array($data)){
         $html .= "\t\t\t<ul>" . PHP_EOL;
         foreach ($data as $categoryKey => $categoryValue){
-            $verbose_summary = 'title="' . $categoryValue['sum'] . ': ';
-            foreach($categoryValue['entries'] as $entryKey => $entryValue){
-                if ($entryValue !== 0)
-                    $verbose_summary .= htmlspecialchars($entryKey) . "($entryValue) ";
+            if (intval($categoryValue['sum']) !== 0){
+                $verbose_summary = 'title="' . $categoryValue['sum'] . ': ';
+                foreach($categoryValue['entries'] as $entryKey => $entryValue){
+                    if ($entryValue !== 0)
+                        $verbose_summary .= htmlspecialchars($entryKey) . "($entryValue) ";
+                }
+                $verbose_summary .= '"';
+                $html.= "\t\t\t\t<li $verbose_summary" . ' class="' . ($categoryValue['pct'] >= 0 ? 'catmatch' : 'catmismatch') . '">' . htmlspecialchars($categoryKey) . " : " . $categoryValue['pct'] . "%</li>" . PHP_EOL;
             }
-            $verbose_summary .= '"';
-            $html.= "\t\t\t\t<li $verbose_summary>" . htmlspecialchars($categoryKey) . " : " . $categoryValue['pct'] . "%</li>" . PHP_EOL;
         }
         $html .= "\t\t\t</ul>" . PHP_EOL;
     }
