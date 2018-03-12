@@ -170,7 +170,10 @@ function printToTable($collection)
 {
     global $disable_analysis;
     if ($collection !== null && count($collection) > 0) {
-        if (!$disable_analysis) $analyzer = mkAnalyzer();
+        if (!$disable_analysis) {
+            $analyzer = mkAnalyzer();
+            buildPercentTables($analyzer);
+        }
         echo "<table class=\"listing\">" . PHP_EOL;
         echo "\t<thead>" . PHP_EOL;
         echo "\t\t<tr>" . PHP_EOL;
@@ -257,6 +260,7 @@ function analyzePositionToArray(&$position,&$analyzer)
     $result = array();
     foreach($analyzer->SearchCategory as $categoryArr){
         $result[(string)$categoryArr->Name] = array();
+        $result[(string)$categoryArr->Name]['entries'] = array();
         foreach($categoryArr->CategoryValue as $categoryVal){
             $matchIdx = -1;
             for ($entryIdx = 0; $matchIdx === -1 && $entryIdx < $analyzer->SearchEntry->count(); $entryIdx++){
@@ -270,12 +274,41 @@ function analyzePositionToArray(&$position,&$analyzer)
                     if (stripos($position->description, (string)$analyzer->SearchEntry[$matchIdx]->SearchTerms->Term[$tidx][0]) !== FALSE)
                         $found = true;
                 }
-                $mod = intval($found ? $categoryVal->MatchValue : $categoryVal->NonMatchValue);
-                $result[(string)$categoryArr->Name][(string)$categoryVal->EntryName] = $mod;
+                $entryScore = intval($found ? $categoryVal->MatchValue : $categoryVal->NonMatchValue);
+                $result[(string)$categoryArr->Name]['entries'][(string)$categoryVal->EntryName] = $entryScore;
             }
         }
+        $sum = array_sum($result[(string)$categoryArr->Name]['entries']);
+        $result[(string)$categoryArr->Name]['sum'] = $sum;
+        $result[(string)$categoryArr->Name]['pct'] = calculatePercentage($sum,$categoryArr['min'],$categoryArr['max']);
     }
     return $result;
+}
+
+function buildPercentTables(&$analyzer)
+{
+    if (intval($analyzer->ConfigVersion) !== 1) return FALSE;
+    foreach($analyzer->SearchCategory as $categoryArr){
+        $catmin = 0;
+        $catmax = 0;
+        foreach($categoryArr->CategoryValue as $categoryVal){
+            $catmin += min(intval($categoryVal->MatchValue), intval($categoryVal->NonMatchValue));
+            $catmax += max(intval($categoryVal->MatchValue), intval($categoryVal->NonMatchValue));
+        }
+        $categoryArr->addAttribute('min', $catmin);
+        $categoryArr->addAttribute('max', $catmax);
+    }
+}
+
+function calculatePercentage(&$sum, $min, $max)
+{
+    $divisor = intval($sum > 0 ? $max : $min);
+    $pct = 0;
+    if ($sum !== 0 && $divisor !== 0)
+         $pct = ($sum / $divisor) * 100;
+    if ($sum < 0 || $divisor < 0)
+        $pct *= -1;
+    return round($pct);
 }
 
 function writeAnalysisSummary(&$data)
@@ -284,14 +317,13 @@ function writeAnalysisSummary(&$data)
     if (is_array($data)){
         $html .= "\t\t\t<ul>" . PHP_EOL;
         foreach ($data as $categoryKey => $categoryValue){
-            $verbose_summary = 'title="';
-            foreach($categoryValue as $entryKey => $entryValue){
+            $verbose_summary = 'title="' . $categoryValue['sum'] . ': ';
+            foreach($categoryValue['entries'] as $entryKey => $entryValue){
                 if ($entryValue !== 0)
                     $verbose_summary .= htmlspecialchars($entryKey) . "($entryValue) ";
             }
             $verbose_summary .= '"';
-            $html.= "\t\t\t\t<li $verbose_summary>" . htmlspecialchars($categoryKey) . " : " . array_sum($categoryValue) . "</li>" . PHP_EOL;
-
+            $html.= "\t\t\t\t<li $verbose_summary>" . htmlspecialchars($categoryKey) . " : " . $categoryValue['pct'] . "%</li>" . PHP_EOL;
         }
         $html .= "\t\t\t</ul>" . PHP_EOL;
     }
