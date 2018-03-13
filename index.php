@@ -264,7 +264,8 @@ function appendRestrictedProviders(&$providers)
 /** Analyzes position description and applies scores based on keywords. */
 function analyzePositionToArray(&$position,&$analyzer)
 {
-    if (intval($analyzer->ConfigVersion) !== 1) return FALSE;
+    $config_version = intval($analyzer->ConfigVersion);
+    if ($config_version > 2) return FALSE;
     $result = array();
     foreach($analyzer->SearchCategory as $categoryArr){
         $result[(string)$categoryArr->Name] = array();
@@ -289,13 +290,25 @@ function analyzePositionToArray(&$position,&$analyzer)
         $sum = array_sum($result[(string)$categoryArr->Name]['entries']);
         $result[(string)$categoryArr->Name]['sum'] = $sum;
         $result[(string)$categoryArr->Name]['pct'] = calculatePercentage($sum,$categoryArr['min'],$categoryArr['max']);
+        if ($config_version >= 2){
+            $title_match = false;
+            if (isset($categoryArr->CategoryTitle)){
+                for($titleIdx = 0;!$title_match && $titleIdx < $categoryArr->CategoryTitle->Term->count(); $titleIdx++)
+                {
+                    if (stripos($position->title, (string)$categoryArr->CategoryTitle->Term[$titleIdx]))
+                        $title_match = true;
+                }
+            }
+            $result[(string)$categoryArr->Name]['title_match'] = $title_match;
+            $result[(string)$categoryArr->Name]['is_global'] = $categoryArr['isglobal'];
+        }
     }
     return $result;
 }
 
 function buildPercentTables(&$analyzer)
 {
-    if (intval($analyzer->ConfigVersion) !== 1) return FALSE;
+    if (intval($analyzer->ConfigVersion) <= 0) return FALSE;
     foreach($analyzer->SearchCategory as $categoryArr){
         $catmin = 0;
         $catmax = 0;
@@ -332,7 +345,7 @@ function writeAnalysisSummary(&$data)
                         $verbose_summary .= htmlspecialchars($entryKey) . "($entryValue) ";
                 }
                 $verbose_summary .= '"';
-                $html.= "\t\t\t\t<li $verbose_summary" . ' class="' . ($categoryValue['pct'] >= 0 ? 'catmatch' : 'catmismatch') . '">' . htmlspecialchars($categoryKey) . " : " . $categoryValue['pct'] . "%</li>" . PHP_EOL;
+                $html.= "\t\t\t\t<li $verbose_summary" . ' class="' . ($categoryValue['pct'] >= 0 ? 'catmatch' : 'catmismatch') . ($categoryValue['title_match'] ? ' titlematch' : '') . ($categoryValue['is_global'] ? ' globalcat' : '') . '">' . htmlspecialchars($categoryKey) . " : " . $categoryValue['pct'] . "%</li>" . PHP_EOL;
             }
         }
         $html .= "\t\t\t</ul>" . PHP_EOL;
