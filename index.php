@@ -34,6 +34,15 @@ table.listing .catmatch{
 table.listing .catmismatch{
     color: red;
 }
+
+table.listing .titlematch{
+    weight: bold;
+    font-family: 'Impact', 'Tahoma', 'Serif';
+}
+
+table.listing .globalcat{
+    font-style: italic;
+}
 </style>
 </head>
 <body>
