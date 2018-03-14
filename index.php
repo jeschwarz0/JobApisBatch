@@ -148,17 +148,18 @@ function fetchPHPJobs($keyword, $location)
 #region Helper Functions
 function process($to_html = true)
 {  
+    $output = '';
     $PROVIDERS = explode(":", getenv("JAB_PROVIDERS"));
     global $location_list, $keyword_list;
     // Loop every location then keyword and create a table for each
     foreach ($location_list as $cur_location) {
         if ($to_html) {
-            echo "<h2>$cur_location</h2>" . PHP_EOL;
+            $output .= "<h2>$cur_location</h2>" . PHP_EOL;
         }
 
         foreach ($keyword_list as $cur_keyword) {
             if ($to_html) {
-                echo "<h3>$cur_keyword</h3>" . PHP_EOL;
+                $output .= "<h3>$cur_keyword</h3>" . PHP_EOL;
             }
 
             $list = new \JobApis\Jobs\Client\Collection();
@@ -172,18 +173,19 @@ function process($to_html = true)
                 }
             } // Print the resulting list
             if ($to_html) {
-                printToTable($list);
+                printToTable($output, $list);
             } else // Assume JSON
             {
-                echo json_encode($list->all());
+                $output .= json_encode($list->all());
             }
 
         }
     }
+    echo $output;
 }
 
 // Prints a collection of jobs to a table
-function printToTable($collection)
+function printToTable(&$output, $collection)
 {
     global $disable_analysis;
     if ($collection !== null && count($collection) > 0) {
@@ -191,30 +193,30 @@ function printToTable($collection)
             $analyzer = mkAnalyzer();
             buildPercentTables($analyzer);
         }
-        echo "<table class=\"listing\">" . PHP_EOL;
-        echo "\t<thead>" . PHP_EOL;
-        echo "\t\t<tr>" . PHP_EOL;
-        echo "\t\t\t<th>Name</th><th>Location</th><th>company</th><th>Salary</th><th>Posted</th><th>Deadline</th><th>Source</th>" . PHP_EOL;
-        if (!$disable_analysis) echo "\t\t\t<th>Score</th>" . PHP_EOL;
-        echo "\t\t</tr>" . PHP_EOL;
-        echo "\t</thead>" . PHP_EOL;
-        echo "\t<tbody>" . PHP_EOL;
+        $output .= "<table class=\"listing\">" . PHP_EOL;
+        $output .= "\t<thead>" . PHP_EOL;
+        $output .= "\t\t<tr>" . PHP_EOL;
+        $output .= "\t\t\t<th>Name</th><th>Location</th><th>company</th><th>Salary</th><th>Posted</th><th>Deadline</th><th>Source</th>" . PHP_EOL;
+        if (!$disable_analysis) $output .= "\t\t\t<th>Score</th>" . PHP_EOL;
+        $output .= "\t\t</tr>" . PHP_EOL;
+        $output .= "\t</thead>" . PHP_EOL;
+        $output .= "\t<tbody>" . PHP_EOL;
         foreach ($collection->all() as $job) {
-            echo "\t\t<tr>" . PHP_EOL;
-            echo "\t\t\t<td><a href=\"$job->url\" target=\"_blank\">$job->name</a></td>" . PHP_EOL;
-            echo "\t\t\t<td>$job->location</td>" . PHP_EOL;
-            echo "\t\t\t<td>" . htmlspecialchars($job->company) . "</td>" . PHP_EOL;
-            echo "\t\t\t<td>$job->baseSalary</td>" . PHP_EOL;
-            echo "\t\t\t<td>" . formatDate($job->datePosted) . "</td>" . PHP_EOL;
-            echo "\t\t\t<td>" . formatDate($job->endDate) . "</td>" . PHP_EOL;
-            echo "\t\t\t<td>$job->source</td>" . PHP_EOL;
+            $output .= "\t\t<tr>" . PHP_EOL;
+            $output .= "\t\t\t<td><a href=\"$job->url\" target=\"_blank\">$job->name</a></td>" . PHP_EOL;
+            $output .= "\t\t\t<td>$job->location</td>" . PHP_EOL;
+            $output .= "\t\t\t<td>" . htmlspecialchars($job->company) . "</td>" . PHP_EOL;
+            $output .= "\t\t\t<td>$job->baseSalary</td>" . PHP_EOL;
+            $output .= "\t\t\t<td>" . formatDate($job->datePosted) . "</td>" . PHP_EOL;
+            $output .= "\t\t\t<td>" . formatDate($job->endDate) . "</td>" . PHP_EOL;
+            $output .= "\t\t\t<td>$job->source</td>" . PHP_EOL;
             if (!$disable_analysis){
                 $scores = analyzePositionToArray($job, $analyzer);
-                echo "\t\t\t<td>" . PHP_EOL . writeAnalysisSummary($scores) . "\t\t\t</td>" . PHP_EOL;
+                $output .= "\t\t\t<td>" . PHP_EOL . writeAnalysisSummary($scores) . "\t\t\t</td>" . PHP_EOL;
             }
-            echo "\t\t</tr>" . PHP_EOL;
+            $output .= "\t\t</tr>" . PHP_EOL;
         }
-        echo "\t</tbody>" . PHP_EOL . "</table>" . PHP_EOL;
+        $output .= "\t</tbody>" . PHP_EOL . "</table>" . PHP_EOL;
     }
 }
 
