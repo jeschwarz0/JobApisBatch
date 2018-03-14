@@ -69,6 +69,24 @@ process(!$JSON_FMT);
 
 #region Providers
 
+function fetchTest($keyword, $location)
+{
+    define('TEST_DATA_PATH', getenv("HOME") . "/.config/JobApisBatch/testjobs.json");
+    $jobs = new \JobApis\Jobs\Client\Collection();
+    if (PHP_OS === 'Linux' && file_exists(TEST_DATA_PATH))
+    {
+        try {
+            $json_list = json_decode(file_get_contents(TEST_DATA_PATH), false);
+            foreach ($json_list as $json_obj){
+                $jobs->add($json_obj);
+            }
+        }catch (Exception $ex){
+           // Do nothing
+        }      
+    }
+    return $jobs;
+}
+
 function fetchJobsMulti($keyword, $location)
 {
     global $max_age;
@@ -225,7 +243,7 @@ function formatDate($date)
 {
     $returnval = "";
     if ($date !== null) {
-        $returnval = $date->format("m/d/y");
+        $returnval = (is_string($date) ? new DateTime($date) :$date)->format("m/d/y");
     }
     return $returnval;
 }
