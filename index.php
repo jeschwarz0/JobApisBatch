@@ -1,3 +1,7 @@
+<?php 
+    $JSON_FMT = strlen(getenv("JAB_OUTPUT_JSON") > 0);
+    if (!$JSON_FMT):
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -50,6 +54,7 @@ table.listing .globalcat{
 <h1>Job Apis Batch - <?php echo date("m/d/y"); ?></h1>
 
 <?php
+endif;
 require __DIR__ . '/vendor/autoload.php';
 
 #region Init
@@ -60,7 +65,7 @@ $max_age = intval(getenv("JAB_MAX_AGE"));
 $disable_analysis = strlen(getenv("JAB_DISABLE_ANALYZER")) > 0;
 #endregion
 // Process the records to desired format
-process(true);
+process(!$JSON_FMT);
 
 #region Providers
 
@@ -151,35 +156,30 @@ function process($to_html = true)
     $output = '';
     $PROVIDERS = explode(":", getenv("JAB_PROVIDERS"));
     global $location_list, $keyword_list;
+    if (!$to_html) $list = new \JobApis\Jobs\Client\Collection();
     // Loop every location then keyword and create a table for each
     foreach ($location_list as $cur_location) {
         if ($to_html) {
             $output .= "<h2>$cur_location</h2>" . PHP_EOL;
         }
-
         foreach ($keyword_list as $cur_keyword) {
             if ($to_html) {
                 $output .= "<h3>$cur_keyword</h3>" . PHP_EOL;
+                $list = new \JobApis\Jobs\Client\Collection();
             }
-
-            $list = new \JobApis\Jobs\Client\Collection();
             foreach ($PROVIDERS as $client) {
                 if (is_callable("fetch" . $client)) {
                     $next = call_user_func("fetch" . $client, $cur_keyword, $cur_location);
                     if (get_class($next) === 'JobApis\Jobs\Client\Collection') {
                         $list->addCollection($next);
                     }
-
                 }
             } // Print the resulting list
             if ($to_html) {
                 printToTable($output, $list);
-            } else // Assume JSON
-            {
-                $output .= json_encode($list->all());
-            }
-
-        }
+            } 
+        }// Process JSON Result
+        if (!$to_html){ $output .= json_encode($list->all()) . PHP_EOL; }
     }
     echo $output;
 }
@@ -373,6 +373,8 @@ function mkAnalyzer()
 }
 
 #endregion
+if (!$JSON_FMT):
 ?>
 </body>
 </html>
+<?php endif;?>
