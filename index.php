@@ -47,6 +47,11 @@ table.listing .titlematch{
 table.listing .globalcat{
     font-style: italic;
 }
+
+table.listing tr.filter_deny{
+    display:none;
+    /*text-decoration: line-through;*/
+}
 </style>
 </head>
 <body>
@@ -210,6 +215,7 @@ function printToTable(&$output, $collection)
         if (!$disable_analysis) {
             $analyzer = mkAnalyzer();
             buildPercentTables($analyzer);
+            $fset = getFilterSettings();
         }
         $output .= "<table class=\"listing\">" . PHP_EOL;
         $output .= "\t<thead>" . PHP_EOL;
@@ -220,7 +226,11 @@ function printToTable(&$output, $collection)
         $output .= "\t</thead>" . PHP_EOL;
         $output .= "\t<tbody>" . PHP_EOL;
         foreach ($collection->all() as $job) {
-            $output .= "\t\t<tr>" . PHP_EOL;
+            if (!$disable_analysis){
+                $scores = analyzePositionToArray($job, $analyzer);
+                $filter_class = positionMeetsThreshold($scores, $fset) ? 'filter_accept' : 'filter_deny';
+            }
+            $output .= "\t\t<tr class=\"$filter_class\">" . PHP_EOL;
             $output .= "\t\t\t<td><a href=\"$job->url\" target=\"_blank\">$job->name</a></td>" . PHP_EOL;
             $output .= "\t\t\t<td>$job->location</td>" . PHP_EOL;
             $output .= "\t\t\t<td>" . htmlspecialchars($job->company) . "</td>" . PHP_EOL;
@@ -229,7 +239,6 @@ function printToTable(&$output, $collection)
             $output .= "\t\t\t<td>" . formatDate($job->endDate) . "</td>" . PHP_EOL;
             $output .= "\t\t\t<td>$job->source</td>" . PHP_EOL;
             if (!$disable_analysis){
-                $scores = analyzePositionToArray($job, $analyzer);
                 $output .= "\t\t\t<td>" . PHP_EOL . writeAnalysisSummary($scores) . "\t\t\t</td>" . PHP_EOL;
             }
             $output .= "\t\t</tr>" . PHP_EOL;
@@ -287,6 +296,37 @@ function appendRestrictedProviders(&$providers)
     }
 }
 
+function positionMeetsThreshold(&$scores, &$filterSettings)
+{
+    $result = true;
+    if ($filterSettings !== FALSE && is_array($scores) && is_array($filterSettings))
+    {
+        for($fsid = 0; $result && $fsid < count($filterSettings); $fsid++)
+        {
+            $cat_score = array_values($scores)[$filterSettings[$fsid][0]]; 
+            if ((!$cat_score['title_match']) && $cat_score['pct'] < $filterSettings[$fsid][1])
+                $result = false;
+        }
+    }
+    return $result;
+}
+
+function getFilterSettings()
+{
+    $result = array();
+    $filter_list =  explode(':', getenv('JAB_FILTER_THRESHOLD'));
+    for($fi = 0; $fi < count($filter_list); $fi++)
+    {
+        $det = explode('@', $filter_list[$fi]);
+        if (count($det) === 2){
+            $appres = array();
+            $appres[0] = intval($det[0]);
+            $appres[1] = intval($det[1]);
+            array_push($result, $appres);
+        }
+    }
+    return count($result) > 0 ? $result : FALSE;
+}
 #endregion
 #region Analyzer
 
