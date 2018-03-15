@@ -230,7 +230,7 @@ function printToTable(&$output, $collection)
                 $scores = analyzePositionToArray($job, $analyzer);
                 $filter_class = positionMeetsThreshold($scores, $fset) ? 'filter_accept' : 'filter_deny';
             }
-            $output .= "\t\t<tr class=\"$filter_class\">" . PHP_EOL;
+            $output .= "\t\t<tr class=\"" . (isset($filter_class) ? $filter_class : "") . "\">" . PHP_EOL;
             $output .= "\t\t\t<td><a href=\"$job->url\" target=\"_blank\">$job->name</a></td>" . PHP_EOL;
             $output .= "\t\t\t<td>$job->location</td>" . PHP_EOL;
             $output .= "\t\t\t<td>" . htmlspecialchars($job->company) . "</td>" . PHP_EOL;
