@@ -324,7 +324,7 @@ function analyzePositionToArray(&$position,&$analyzer)
             if (isset($categoryArr->CategoryTitle)){
                 for($titleIdx = 0;!$title_match && $titleIdx < $categoryArr->CategoryTitle->Term->count(); $titleIdx++)
                 {
-                    if (stripos($position->title, (string)$categoryArr->CategoryTitle->Term[$titleIdx]))
+                    if (stripos($position->title, (string)$categoryArr->CategoryTitle->Term[$titleIdx]) !== FALSE)
                         $title_match = true;
                 }
             }
