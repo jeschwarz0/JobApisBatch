@@ -3,6 +3,7 @@
         "jobapis/jobs-multi": "^1.1",
         "jobapis/jobs-craigslist": "^0.1.0",
         "jobapis/jobs-goremote": "^0.1.0",
-        "jobapis/jobs-phpjobs": "^0.1.0"
+        "jobapis/jobs-phpjobs": "^0.1.0",
+        "jschwarz/jobs-JobsHQ": "@dev"
     }
 }

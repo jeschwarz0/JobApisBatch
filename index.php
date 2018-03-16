@@ -172,6 +172,24 @@ function fetchPHPJobs($keyword, $location)
     return $jobs;
 }
 
+function fetchJobsHQ($keyword, $location)
+{
+    $query = new JobApis\Jobs\Client\Queries\JobsHQQuery();
+    $query  -> set('countrycode', 'US')
+            -> set('keywords', $keyword)
+            -> set('radialtown', $location)
+            -> set('role', 43)
+            -> set('nearfacetsshown', true);
+    $client = new JobApis\Jobs\Client\Providers\JobsHQProvider($query);
+    try {
+        $jobs = $client->getJobs();
+    }
+    catch (Exception $ex){
+        $jobs = new \JobApis\Jobs\Client\Collection();
+    }
+    return $jobs;
+}
+
 #endregion
 #region Helper Functions
 function process($to_html = true)
