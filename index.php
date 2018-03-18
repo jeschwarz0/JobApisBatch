@@ -238,7 +238,7 @@ function printToTable(&$output, $collection)
         $output .= "<table class=\"listing\">" . PHP_EOL;
         $output .= "\t<thead>" . PHP_EOL;
         $output .= "\t\t<tr>" . PHP_EOL;
-        $output .= "\t\t\t<th>Name</th><th>Location</th><th>company</th><th>Salary</th><th>Posted</th><th>Deadline</th><th>Source</th>" . PHP_EOL;
+        $output .= "\t\t\t<th>Name</th><th>Location</th><th>company</th><th>Posted</th><th>Source</th>" . PHP_EOL;
         if (!$disable_analysis) $output .= "\t\t\t<th>Score</th>" . PHP_EOL;
         $output .= "\t\t</tr>" . PHP_EOL;
         $output .= "\t</thead>" . PHP_EOL;
@@ -252,9 +252,7 @@ function printToTable(&$output, $collection)
             $output .= "\t\t\t<td><a href=\"$job->url\" target=\"_blank\">$job->name</a></td>" . PHP_EOL;
             $output .= "\t\t\t<td>$job->location</td>" . PHP_EOL;
             $output .= "\t\t\t<td>" . htmlspecialchars($job->company) . "</td>" . PHP_EOL;
-            $output .= "\t\t\t<td>$job->baseSalary</td>" . PHP_EOL;
             $output .= "\t\t\t<td>" . formatDate($job->datePosted) . "</td>" . PHP_EOL;
-            $output .= "\t\t\t<td>" . formatDate($job->endDate) . "</td>" . PHP_EOL;
             $output .= "\t\t\t<td>$job->source</td>" . PHP_EOL;
             if (!$disable_analysis){
                 $output .= "\t\t\t<td>" . PHP_EOL . writeAnalysisSummary($scores) . "\t\t\t</td>" . PHP_EOL;
