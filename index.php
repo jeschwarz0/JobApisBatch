@@ -377,6 +377,7 @@ function analyzePositionToArray(&$position,&$analyzer)
         $sum = array_sum(array_column($result[(string)$categoryArr->Name]['entries'], 'score'));
         $result[(string)$categoryArr->Name]['sum'] = $sum;
         $result[(string)$categoryArr->Name]['pct'] = calculatePercentage($sum,$categoryArr['min'],$categoryArr['max']);
+        $result[(string)$categoryArr->Name]['any_match'] = in_array(true, array_column($result[(string)$categoryArr->Name]['entries'], 'is_match'));
         if ($config_version >= 2){
             $title_match = false;
             if (isset($categoryArr->CategoryTitle)){
@@ -425,7 +426,7 @@ function writeAnalysisSummary(&$data)
     if (is_array($data)){
         $html .= "\t\t\t<ul>" . PHP_EOL;
         foreach ($data as $categoryKey => $categoryValue){
-            if (intval($categoryValue['sum']) !== 0){
+            if ($categoryValue['any_match'] === true){
                 $verbose_summary = 'title="' . $categoryValue['sum'] . ': ';
                 foreach($categoryValue['entries'] as $entryKey => $entryValue){
                     if ($entryValue['score'] !== 0)
