@@ -424,7 +424,7 @@ function writeAnalysisSummary(&$data)
 { 
     $html = '';
     if (is_array($data)){
-        $html .= "\t\t\t<ul>" . PHP_EOL;
+        $html .= "\t\t\t\t<ul>" . PHP_EOL;
         foreach ($data as $categoryKey => $categoryValue){
             if ($categoryValue['any_match'] === true){
                 $verbose_summary = 'title="' . $categoryValue['sum'] . ': ';
@@ -433,10 +433,10 @@ function writeAnalysisSummary(&$data)
                         $verbose_summary .= htmlspecialchars($entryKey) . "(" . $entryValue['score'] . ($entryValue['is_match'] ? 'm' : 'n') . ") ";
                 }
                 $verbose_summary .= '"';
-                $html.= "\t\t\t\t<li $verbose_summary" . ' class="' . ($categoryValue['pct'] >= 0 ? 'catmatch' : 'catmismatch') . ($categoryValue['title_match'] ? ' titlematch' : '') . ($categoryValue['is_global'] ? ' globalcat' : '') . '">' . htmlspecialchars($categoryKey) . " : " . $categoryValue['pct'] . "%</li>" . PHP_EOL;
+                $html.= "\t\t\t\t\t<li $verbose_summary" . ' class="' . ($categoryValue['pct'] >= 0 ? 'catmatch' : 'catmismatch') . ($categoryValue['title_match'] ? ' titlematch' : '') . ($categoryValue['is_global'] ? ' globalcat' : '') . '">' . htmlspecialchars($categoryKey) . " : " . $categoryValue['pct'] . "%</li>" . PHP_EOL;
             }
         }
-        $html .= "\t\t\t</ul>" . PHP_EOL;
+        $html .= "\t\t\t\t</ul>" . PHP_EOL;
     }
     return $html;
 }
