@@ -368,11 +368,13 @@ function analyzePositionToArray(&$position,&$analyzer)
                     if (stripos($position->description, (string)$analyzer->SearchEntry[$matchIdx]->SearchTerms->Term[$tidx][0]) !== FALSE)
                         $found = true;
                 }
-                $entryScore = intval($found ? $categoryVal->MatchValue : $categoryVal->NonMatchValue);
-                $result[(string)$categoryArr->Name]['entries'][(string)$categoryVal->EntryName] = $entryScore;
+                $entryRec = array();
+                $entryRec['score'] = intval($found ? $categoryVal->MatchValue : $categoryVal->NonMatchValue);
+                $entryRec['is_match'] = $found;
+                $result[(string)$categoryArr->Name]['entries'][(string)$categoryVal->EntryName] = $entryRec;
             }
         }
-        $sum = array_sum($result[(string)$categoryArr->Name]['entries']);
+        $sum = array_sum(array_column($result[(string)$categoryArr->Name]['entries'], 'score'));
         $result[(string)$categoryArr->Name]['sum'] = $sum;
         $result[(string)$categoryArr->Name]['pct'] = calculatePercentage($sum,$categoryArr['min'],$categoryArr['max']);
         if ($config_version >= 2){
@@ -426,8 +428,8 @@ function writeAnalysisSummary(&$data)
             if (intval($categoryValue['sum']) !== 0){
                 $verbose_summary = 'title="' . $categoryValue['sum'] . ': ';
                 foreach($categoryValue['entries'] as $entryKey => $entryValue){
-                    if ($entryValue !== 0)
-                        $verbose_summary .= htmlspecialchars($entryKey) . "($entryValue) ";
+                    if ($entryValue['score'] !== 0)
+                        $verbose_summary .= htmlspecialchars($entryKey) . "(" . $entryValue['score'] . ($entryValue['is_match'] ? 'm' : 'n') . ") ";
                 }
                 $verbose_summary .= '"';
                 $html.= "\t\t\t\t<li $verbose_summary" . ' class="' . ($categoryValue['pct'] >= 0 ? 'catmatch' : 'catmismatch') . ($categoryValue['title_match'] ? ' titlematch' : '') . ($categoryValue['is_global'] ? ' globalcat' : '') . '">' . htmlspecialchars($categoryKey) . " : " . $categoryValue['pct'] . "%</li>" . PHP_EOL;
