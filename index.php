@@ -239,7 +239,7 @@ function printToTable(&$output, $collection)
         $output .= "<table class=\"listing\">" . PHP_EOL;
         $output .= "\t<thead>" . PHP_EOL;
         $output .= "\t\t<tr>" . PHP_EOL;
-        $output .= "\t\t\t<th>Name</th><th>Location</th><th>company</th><th>Posted</th><th>Source</th>" . PHP_EOL;
+        $output .= "\t\t\t<th>Name</th><th>Location</th><th>Company</th><th>Posted</th><th>Source</th>" . PHP_EOL;
         if (!$disable_analysis) $output .= "\t\t\t<th>Score</th>" . PHP_EOL;
         $output .= "\t\t</tr>" . PHP_EOL;
         $output .= "\t</thead>" . PHP_EOL;
