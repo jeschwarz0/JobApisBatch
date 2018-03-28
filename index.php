@@ -282,31 +282,16 @@ function appendRestrictedProviders(&$providers)
         if ($keys_json !== false) {
             $keys = json_decode($keys_json, true);
             unset($keys_json);
-            // Build the array
-            $nprov = [
-                'Careerbuilder' => [
-                    'DeveloperKey' => $keys['Careerbuilder.DeveloperKey'],
-                ],
-                'Careerjet' => [
-                    'affid' => $keys['Careerjet.affid'],
-                ],
-                'Indeed' => [
-                    'publisher' => $keys['Indeed.publisher'],
-                ],
-                'J2c' => [
-                    'id' => $keys['J2c.id'],
-                    'pass' => $keys['J2c.pass'],
-                ],
-                'Juju' => [
-                    'partnerid' => $keys['Juju.partnerid'],
-                ],
-                'Usajobs' => [
-                    'AuthorizationKey' => $keys['Usajobs.AuthorizationKey'],
-                ],
-                'Ziprecruiter' => [
-                    'api_key' => $keys['Ziprecruiter.api_key'],
-                ],
-            ]; // Merge the array
+            // Build the array\
+            $nprov = array();
+            foreach ($keys as $key => $keyvalue){
+                $keyval = explode('.', $key);
+                if (!array_key_exists($keyval[0], $nprov))
+                    $nprov[$keyval[0]] = array();
+                if (count($keyval) === 2)
+                    $nprov[$keyval[0]][$keyval[1]] = $keyvalue;
+            };
+            // Merge the array
             $providers = array_merge($providers, $nprov);
         }
     }
