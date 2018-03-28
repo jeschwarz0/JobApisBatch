@@ -82,9 +82,10 @@ function fetchTest($keyword, $location)
     {
         try {
             $json_list = json_decode(file_get_contents(TEST_DATA_PATH), false);
-            foreach ($json_list as $json_obj){
-                $jobs->add($json_obj);
-            }
+            if ($json_list !== NULL)
+                foreach ($json_list as $json_obj){
+                    $jobs->add($json_obj);
+                }
         }catch (Exception $ex){
            // Do nothing
         }      
