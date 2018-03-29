@@ -231,8 +231,9 @@ function printToTable(&$output, $collection)
     global $disable_analysis;
     if ($collection !== null && count($collection) > 0) {
         if (!$disable_analysis) {
-            $analyzer = mkAnalyzer();
-            buildPercentTables($analyzer);
+            $FN = PHP_OS === 'Linux' ? getenv("HOME") . "/.config/JobApisBatch/preferences.xml" : getenv("APPDATA") . "/JobApisBatch/preferences.xml";
+            $analyzer = new \JobApis\Utilities\PositionAnalyzer($FN);
+            unset($FN);
             $fset = getFilterSettings();
         }
         $output .= "<table class=\"listing\">" . PHP_EOL;
@@ -245,7 +246,7 @@ function printToTable(&$output, $collection)
         $output .= "\t<tbody>" . PHP_EOL;
         foreach ($collection->all() as $job) {
             if (!$disable_analysis){
-                $scores = analyzePositionToArray($job, $analyzer);
+                $scores = $analyzer->analyzePositionToArray($job);
                 $filter_class = positionMeetsThreshold($scores, $fset) ? 'filter_accept' : 'filter_deny';
             }
             $output .= "\t\t<tr class=\"" . (isset($filter_class) ? $filter_class : "") . "\">" . PHP_EOL;
@@ -331,80 +332,6 @@ function getFilterSettings()
 #endregion
 #region Analyzer
 
-/** Analyzes position description and applies scores based on keywords. */
-function analyzePositionToArray(&$position,&$analyzer)
-{
-    $config_version = intval($analyzer->ConfigVersion);
-    if ($config_version > 2) return FALSE;
-    $result = array();
-    foreach($analyzer->SearchCategory as $categoryArr){
-        $result[(string)$categoryArr->Name] = array();
-        $result[(string)$categoryArr->Name]['entries'] = array();
-        foreach($categoryArr->CategoryValue as $categoryVal){
-            $matchIdx = -1;
-            for ($entryIdx = 0; $matchIdx === -1 && $entryIdx < $analyzer->SearchEntry->count(); $entryIdx++){
-                if (strcmp($analyzer->SearchEntry[$entryIdx]->Name, $categoryVal->EntryName) === 0){
-                    $matchIdx = $entryIdx;
-                }
-            }
-            if ($matchIdx !== -1){
-                $found = false;
-                for ($tidx = 0; !$found && $tidx < $analyzer->SearchEntry[$matchIdx]->SearchTerms->Term->count(); $tidx++){
-                    if (stripos($position->description, (string)$analyzer->SearchEntry[$matchIdx]->SearchTerms->Term[$tidx][0]) !== FALSE)
-                        $found = true;
-                }
-                $entryRec = array();
-                $entryRec['score'] = intval($found ? $categoryVal->MatchValue : $categoryVal->NonMatchValue);
-                $entryRec['is_match'] = $found;
-                $result[(string)$categoryArr->Name]['entries'][(string)$categoryVal->EntryName] = $entryRec;
-            }
-        }
-        $sum = array_sum(array_column($result[(string)$categoryArr->Name]['entries'], 'score'));
-        $result[(string)$categoryArr->Name]['sum'] = $sum;
-        $result[(string)$categoryArr->Name]['pct'] = calculatePercentage($sum,$categoryArr['min'],$categoryArr['max']);
-        $result[(string)$categoryArr->Name]['any_match'] = in_array(true, array_column($result[(string)$categoryArr->Name]['entries'], 'is_match'));
-        if ($config_version >= 2){
-            $title_match = false;
-            if (isset($categoryArr->CategoryTitle)){
-                for($titleIdx = 0;!$title_match && $titleIdx < $categoryArr->CategoryTitle->Term->count(); $titleIdx++)
-                {
-                    if (stripos($position->title, (string)$categoryArr->CategoryTitle->Term[$titleIdx]) !== FALSE)
-                        $title_match = true;
-                }
-            }
-            $result[(string)$categoryArr->Name]['title_match'] = $title_match;
-            $result[(string)$categoryArr->Name]['is_global'] = $categoryArr['isglobal'];
-        }
-    }
-    return $result;
-}
-
-function buildPercentTables(&$analyzer)
-{
-    if (intval($analyzer->ConfigVersion) <= 0) return FALSE;
-    foreach($analyzer->SearchCategory as $categoryArr){
-        $catmin = 0;
-        $catmax = 0;
-        foreach($categoryArr->CategoryValue as $categoryVal){
-            $catmin += min(intval($categoryVal->MatchValue), intval($categoryVal->NonMatchValue));
-            $catmax += max(intval($categoryVal->MatchValue), intval($categoryVal->NonMatchValue));
-        }
-        $categoryArr->addAttribute('min', $catmin);
-        $categoryArr->addAttribute('max', $catmax);
-    }
-}
-
-function calculatePercentage(&$sum, $min, $max)
-{
-    $divisor = intval($sum > 0 ? $max : $min);
-    $pct = 0;
-    if ($sum !== 0 && $divisor !== 0)
-         $pct = ($sum / $divisor) * 100;
-    if ($sum < 0 || $divisor < 0)
-        $pct *= -1;
-    return round($pct);
-}
-
 function writeAnalysisSummary(&$data)
 { 
     $html = '';
@@ -424,14 +351,6 @@ function writeAnalysisSummary(&$data)
         $html .= "\t\t\t\t</ul>" . PHP_EOL;
     }
     return $html;
-}
-
-function mkAnalyzer()
-{
-    $FN = PHP_OS === 'Linux' ? getenv("HOME") . "/.config/JobApisBatch/preferences.xml" : getenv("APPDATA") . "/JobApisBatch/preferences.xml";
-    $fil = file_get_contents($FN) or die("Failed to load preferences.xml");
-    $parse = simplexml_load_string($fil) or die("Failed to parse preferences.xml");
-    return $parse;
 }
 
 #endregion
