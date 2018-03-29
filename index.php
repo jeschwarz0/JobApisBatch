@@ -64,8 +64,6 @@ require __DIR__ . '/vendor/autoload.php';
 
 #region Init
 // Preload variables
-$location_list = explode(':', getenv("JAB_LOCATIONS"));
-$keyword_list = explode(':', getenv("JAB_KEYWORDS"));
 $max_age = intval(getenv("JAB_MAX_AGE"));
 $disable_analysis = strlen(getenv("JAB_DISABLE_ANALYZER")) > 0;
 #endregion
@@ -197,14 +195,15 @@ function process($to_html = true)
 {  
     $output = '';
     $PROVIDERS = explode(":", getenv("JAB_PROVIDERS"));
-    global $location_list, $keyword_list;
+    $LOCATION_LIST = explode(':', getenv("JAB_LOCATIONS"));
+    $KEYWORD_LIST = explode(':', getenv("JAB_KEYWORDS"));
     if (!$to_html) $list = new \JobApis\Jobs\Client\Collection();
     // Loop every location then keyword and create a table for each
-    foreach ($location_list as $cur_location) {
+    foreach ($LOCATION_LIST as $cur_location) {
         if ($to_html) {
             $output .= "<h2>$cur_location</h2>" . PHP_EOL;
         }
-        foreach ($keyword_list as $cur_keyword) {
+        foreach ($KEYWORD_LIST as $cur_keyword) {
             if ($to_html) {
                 $output .= "<h3>$cur_keyword</h3>" . PHP_EOL;
                 $list = new \JobApis\Jobs\Client\Collection();
