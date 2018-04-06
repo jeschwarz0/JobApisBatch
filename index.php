@@ -31,20 +31,20 @@ table.listing th {
     color: white;
 }
 
-table.listing .catmatch{
+table.listing .pa-catmatch{
     color: green;
 }
 
-table.listing .catmismatch{
+table.listing .pa-catmismatch{
     color: red;
 }
 
-table.listing .titlematch{
+table.listing .pa-titlematch{
     weight: bold;
     font-family: 'Impact', 'Tahoma', 'Serif';
 }
 
-table.listing .globalcat{
+table.listing .pa-globalcat{
     font-style: italic;
 }
 
@@ -256,7 +256,7 @@ function printToTable(&$output, $collection)
             $output .= "\t\t\t<td>" . formatDate($job->datePosted) . "</td>" . PHP_EOL;
             $output .= "\t\t\t<td>$job->source</td>" . PHP_EOL;
             if (!$disable_analysis){
-                $output .= "\t\t\t<td>" . PHP_EOL . writeAnalysisSummary($scores) . "\t\t\t</td>" . PHP_EOL;
+                $output .= "\t\t\t<td>" . PHP_EOL . \JobApis\Utilities\PositionAnalyzer::BuildSummaryList1($scores, 4) . "\t\t\t</td>" . PHP_EOL;
             }
             $output .= "\t\t</tr>" . PHP_EOL;
         }
@@ -330,30 +330,7 @@ function getFilterSettings()
     return count($result) > 0 ? $result : FALSE;
 }
 #endregion
-#region Analyzer
 
-function writeAnalysisSummary(&$data)
-{ 
-    $html = '';
-    if (is_array($data)){
-        $html .= "\t\t\t\t<ul>" . PHP_EOL;
-        foreach ($data as $categoryKey => $categoryValue){
-            if ($categoryValue['any_match'] === true){
-                $verbose_summary = 'title="' . $categoryValue['sum'] . ': ';
-                foreach($categoryValue['entries'] as $entryKey => $entryValue){
-                    if ($entryValue['score'] !== 0)
-                        $verbose_summary .= htmlspecialchars($entryKey) . "(" . $entryValue['score'] . ($entryValue['is_match'] ? 'm' : 'n') . ") ";
-                }
-                $verbose_summary .= '"';
-                $html.= "\t\t\t\t\t<li $verbose_summary" . ' class="' . ($categoryValue['pct'] >= 0 ? 'catmatch' : 'catmismatch') . ($categoryValue['title_match'] ? ' titlematch' : '') . ($categoryValue['is_global'] ? ' globalcat' : '') . '">' . htmlspecialchars($categoryKey) . " : " . $categoryValue['pct'] . "%</li>" . PHP_EOL;
-            }
-        }
-        $html .= "\t\t\t\t</ul>" . PHP_EOL;
-    }
-    return $html;
-}
-
-#endregion
 if (!$JSON_FMT):
 ?>
 </body>
