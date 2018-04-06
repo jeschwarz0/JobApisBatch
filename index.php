@@ -62,11 +62,6 @@ table.listing tr.filter_deny{
 endif;
 require __DIR__ . '/vendor/autoload.php';
 
-#region Init
-// Preload variables
-$max_age = intval(getenv("JAB_MAX_AGE"));
-$disable_analysis = strlen(getenv("JAB_DISABLE_ANALYZER")) > 0;
-#endregion
 // Process the records to desired format
 process(!$JSON_FMT);
 
@@ -93,8 +88,6 @@ function fetchTest($keyword, $location)
 
 function fetchJobsMulti($keyword, $location)
 {
-    global $max_age;
-
     $providers = [
         'Careercast' => [],
         'Github' => [],
@@ -114,7 +107,7 @@ function fetchJobsMulti($keyword, $location)
         ->setLocation($location);
 
     $options = [
-        'maxAge' => $max_age,
+        'maxAge' => intval(getenv("JAB_MAX_AGE")),
         'maxResults' => 0,
         'orderBy' => 'datePosted',
         'order' => 'desc',
@@ -228,7 +221,7 @@ function process($to_html = true)
 // Prints a collection of jobs to a table
 function printToTable(&$output, $collection)
 {
-    global $disable_analysis;
+    $disable_analysis = strlen(getenv("JAB_DISABLE_ANALYZER")) > 0;
     if ($collection !== null && count($collection) > 0) {
         if (!$disable_analysis) {
             $FN = PHP_OS === 'Linux' ? getenv("HOME") . "/.config/JobApisBatch/preferences.xml" : getenv("APPDATA") . "/JobApisBatch/preferences.xml";
