@@ -1,4 +1,4 @@
-<?php 
+<?php // Determine if output is HTML or JSON
     $JSON_FMT = strlen(getenv("JAB_OUTPUT_JSON") > 0);
     if (!$JSON_FMT):
 ?>
@@ -64,9 +64,15 @@ require __DIR__ . '/vendor/autoload.php';
 
 // Process the records to desired format
 process(!$JSON_FMT);
-
+// These functions will provide a collection of Job objects with keyword and location as parameters
 #region Providers
 
+/**
+ * Provides test records from a predefined JSON file.
+ * @param string $keyword The keyword to search for.
+ * @param string $location The location to search for.
+ * @return \JobApis\Jobs\Client\Collection A collection of \JobAPis\Jobs\Client\Job objects.
+ */
 function fetchTest($keyword, $location)
 {
     define('TEST_DATA_PATH', getenv("HOME") . "/.config/JobApisBatch/testjobs.json");
@@ -86,6 +92,13 @@ function fetchTest($keyword, $location)
     return $jobs;
 }
 
+/**
+ * Provides records from multiple sources using Jobs Multi.
+ * Loads additional providers from keys.json.
+ * @param string $keyword The keyword to search for.
+ * @param string $location The location to search for.
+ * @return \JobApis\Jobs\Client\Collection A collection of \JobAPis\Jobs\Client\Job objects.
+ */
 function fetchJobsMulti($keyword, $location)
 {
     $providers = [
@@ -117,6 +130,12 @@ function fetchJobsMulti($keyword, $location)
     return $multi_client->getAllJobs($options);
 }
 
+/**
+ * Fetches records from the Craigslist API.
+ * @param string $keyword The keyword to search for.
+ * @param string $location The location to search for.
+ * @return \JobApis\Jobs\Client\Collection A collection of \JobAPis\Jobs\Client\Job objects.
+ */
 function fetchCraigslist($keyword, $location)
 {
     $query = new JobApis\Jobs\Client\Queries\CraigslistQuery();
@@ -136,6 +155,12 @@ function fetchCraigslist($keyword, $location)
    
 }
 
+/**
+ * Fetches records from the GoRemote API.
+ * @param string $keyword The keyword to search for.
+ * @param string $location The location to search for.
+ * @return \JobApis\Jobs\Client\Collection A collection of \JobAPis\Jobs\Client\Job objects.
+ */
 function fetchGoRemote($keyword, $location)
 {
     $query = new JobApis\Jobs\Client\Queries\GoRemoteQuery();
@@ -149,6 +174,12 @@ function fetchGoRemote($keyword, $location)
     return $jobs;
 }
 
+/**
+ * Fetches records from the PHPJobs API.
+ * @param string $keyword The keyword to search for.
+ * @param string $location The location to search for.
+ * @return \JobApis\Jobs\Client\Collection A collection of \JobAPis\Jobs\Client\Job objects.
+ */
 function fetchPHPJobs($keyword, $location)
 {
     $query = new JobApis\Jobs\Client\Queries\PhpjobsQuery();
@@ -164,6 +195,12 @@ function fetchPHPJobs($keyword, $location)
     return $jobs;
 }
 
+/**
+ * Fetches records from the custom JobsHQ API.
+ * @param string $keyword The keyword to search for.
+ * @param string $location The location to search for.
+ * @return \JobApis\Jobs\Client\Collection A collection of \JobAPis\Jobs\Client\Job objects.
+ */
 function fetchJobsHQ($keyword, $location)
 {
     $query = new JobApis\Jobs\Client\Queries\JobsHQQuery();
@@ -184,6 +221,11 @@ function fetchJobsHQ($keyword, $location)
 
 #endregion
 #region Helper Functions
+/**
+ * Invokes the primary process of the JAB.
+ * Loops through the providers, keywords and locations.
+ * @param bool $to_html If true render html, otherwise JSON.
+ */
 function process($to_html = true)
 {  
     $output = '';
@@ -218,8 +260,12 @@ function process($to_html = true)
     echo $output;
 }
 
-// Prints a collection of jobs to a table
-function printToTable(&$output, $collection)
+/** 
+ *  Generates an HTML table from the collection.
+ * @param string The referenced string to append the completed HTML to.
+ * @param \JobApis\Jobs\Client\Collection The collection to process.
+ */
+ function printToTable(&$output, $collection)
 {
     $disable_analysis = strlen(getenv("JAB_DISABLE_ANALYZER")) > 0;
     if ($collection !== null && count($collection) > 0) {
@@ -256,8 +302,11 @@ function printToTable(&$output, $collection)
         $output .= "\t</tbody>" . PHP_EOL . "</table>" . PHP_EOL;
     }
 }
-
-// Formats a date or empty if null
+/** 
+ * Formats a date to be printed.
+ * @param DateTime|string The date input string.
+ * @return string The input date printed as a string or an empty string.
+ */
 function formatDate($date)
 {
     $returnval = "";
@@ -267,6 +316,11 @@ function formatDate($date)
     return $returnval;
 }
 
+/** 
+ * Appends providers for JobsMulti which require credentials to the list of providers.
+ * Requires keys.json to be in the path and contain the required keys.
+ * @param array A reference to the original list of providers.
+ */
 function appendRestrictedProviders(&$providers)
 {
     $keys_path = 'keys.json';
@@ -291,6 +345,12 @@ function appendRestrictedProviders(&$providers)
     }
 }
 
+/**
+ * Checks an analyser output against filter settings to determine if it meets the criteria.
+ * @param array $scores A reference to an array generated by the analyzer.
+ * @param array $filterSettings A reference to the filter settings to test against.
+ * @return bool Returns true if there are no filter settings, otherwise the result of the check.
+ */
 function positionMeetsThreshold(&$scores, &$filterSettings)
 {
     $result = true;
@@ -306,6 +366,13 @@ function positionMeetsThreshold(&$scores, &$filterSettings)
     return $result;
 }
 
+/**
+ * Creates a filter settings array based off the JAB_FILTER_THRESHOLD environment variable.
+ * Allows multiple instances separated by ':' which contain 2 integers separated by '@'.
+ * The first integer is the ordinal position of the Category as it is listed in the configuration.
+ * The second integer is the minimum score that would pass the filtering.
+ * @return array|FALSE Returns the array on success, otherwise FALSE.
+ */
 function getFilterSettings()
 {
     $result = array();
