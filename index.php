@@ -62,6 +62,7 @@ table.listing tr.filter_deny{
 endif;
 require __DIR__ . '/vendor/autoload.php';
 
+define('CONFIG_PATH', PHP_OS === 'Linux' ? getenv("HOME") . "/.config/JobApisBatch/" : getenv("APPDATA") . "/JobApisBatch/");
 // Process the records to desired format
 process(!$JSON_FMT);
 // These functions will provide a collection of Job objects with keyword and location as parameters
@@ -75,9 +76,9 @@ process(!$JSON_FMT);
  */
 function fetchTest($keyword, $location)
 {
-    define('TEST_DATA_PATH', getenv("HOME") . "/.config/JobApisBatch/testjobs.json");
+    define('TEST_DATA_PATH', CONFIG_PATH . 'testjobs.json');
     $jobs = new \JobApis\Jobs\Client\Collection();
-    if (PHP_OS === 'Linux' && file_exists(TEST_DATA_PATH))
+    if (file_exists(TEST_DATA_PATH))
     {
         try {
             $json_list = json_decode(file_get_contents(TEST_DATA_PATH), false);
@@ -270,9 +271,7 @@ function process($to_html = true)
     $disable_analysis = strlen(getenv("JAB_DISABLE_ANALYZER")) > 0;
     if ($collection !== null && count($collection) > 0) {
         if (!$disable_analysis) {
-            $FN = PHP_OS === 'Linux' ? getenv("HOME") . "/.config/JobApisBatch/preferences.xml" : getenv("APPDATA") . "/JobApisBatch/preferences.xml";
-            $analyzer = new \JobApis\Utilities\PositionAnalyzer($FN);
-            unset($FN);
+            $analyzer = new \JobApis\Utilities\PositionAnalyzer(CONFIG_PATH . 'preferences.xml');
             $fset = getFilterSettings();
         }
         $output .= "<table class=\"listing\">" . PHP_EOL;
@@ -323,7 +322,7 @@ function formatDate($date)
  */
 function appendRestrictedProviders(&$providers)
 {
-    $keys_path = 'keys.json';
+    $keys_path = CONFIG_PATH . 'keys.json';
     if (file_exists($keys_path)) {
         $keys_json = file_get_contents($keys_path);
         unset($keys_path);
