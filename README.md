@@ -48,6 +48,7 @@ To access JobsMulti providers requiring credentials, create keys.json with any o
 * **JAB_KEYWORDS** - Gets the keywords to search, separated by ':'
 * **JAB_DISABLE_ANALYZER** - If set, disable analyzer functionality (and filtering)
 * **JAB_FILTER_THRESHOLD** - Gets the filter threshold entries (CategoryIndex@MinPct) separated by ':'
+* **JAB_LENGTH_REQ** - If set, disable analyzer functionality for jobs with a description character count less than value
 * **JAB_MAX_AGE** - Gets the number of days to search for (where implemented)
 
 ## Authors

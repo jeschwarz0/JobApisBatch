@@ -273,6 +273,7 @@ function process($to_html = true)
         if (!$disable_analysis) {
             $analyzer = new \JobApis\Utilities\PositionAnalyzer(CONFIG_PATH . 'preferences.xml');
             $fset = getFilterSettings();
+            $desc_len_req = intval(getenv("JAB_LENGTH_REQ"));
         }
         $output .= "<table class=\"listing\">" . PHP_EOL;
         $output .= "\t<thead>" . PHP_EOL;
@@ -284,8 +285,12 @@ function process($to_html = true)
         $output .= "\t<tbody>" . PHP_EOL;
         foreach ($collection->all() as $job) {
             if (!$disable_analysis){
-                $scores = $analyzer->analyzePositionToArray($job);
-                $filter_class = positionMeetsThreshold($scores, $fset) ? 'filter_accept' : 'filter_deny';
+                // Check if length is sufficient to analyze
+                $alen = $desc_len_req <= 0 || strlen($job->description) >= $desc_len_req;
+                if ($alen){
+                    $scores = $analyzer->analyzePositionToArray($job);
+                    $filter_class = positionMeetsThreshold($scores, $fset) ? 'filter_accept' : 'filter_deny';
+                }
             }
             $output .= "\t\t<tr class=\"" . (isset($filter_class) ? $filter_class : "") . "\">" . PHP_EOL;
             $output .= "\t\t\t<td><a href=\"$job->url\" target=\"_blank\">$job->name</a></td>" . PHP_EOL;
@@ -294,7 +299,7 @@ function process($to_html = true)
             $output .= "\t\t\t<td>" . formatDate($job->datePosted) . "</td>" . PHP_EOL;
             $output .= "\t\t\t<td>$job->source</td>" . PHP_EOL;
             if (!$disable_analysis){
-                $output .= "\t\t\t<td>" . PHP_EOL . \JobApis\Utilities\PositionAnalyzer::BuildSummaryList1($scores, 4) . "\t\t\t</td>" . PHP_EOL;
+                $output .= "\t\t\t<td>" . PHP_EOL . ($alen ? \JobApis\Utilities\PositionAnalyzer::BuildSummaryList1($scores, 4) : '') . "\t\t\t</td>" . PHP_EOL;
             }
             $output .= "\t\t</tr>" . PHP_EOL;
         }
